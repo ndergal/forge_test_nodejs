@@ -1,0 +1,50 @@
+====== Configurer des droits des différents outils ====== 
+
+===== Configuration des droits de Gitlab ===== 
+
+Après s'être connecté avec notre compte root ( ou un compte administrateur par la suite ) qui est administrateur nous pouvons ajouter des utilisateurs en allant dans l'admin area. 
+
+Dans l'onglet "Users" on trouve toute les personnes déjà créées, en éditant leurs profil on peut choisir ou non de les rendre administrateur et de les faire appartenir à un groupe. 
+
+Dans l'onglet "Groups" on trouve tout les groupes, en cliquant dessus on peut choisir qui en fait partie, quel sont les rôles de chacun dans ce groupe et la confidentialité du groupe. 
+
+===== Configuration des droits de Jenkins ===== 
+
+Il faut aller dans « administrer Jenkins » et « configurer la sécurité globale ». \\ 
+
+En cochant « Stratégie d'authorisation matricielle basée sur les projets » on pourra choisir différents droits en fonctions des projets. \\ 
+
+Pour la partie « Royaume pour la sécurité » on cochera la case correspondantes aux base de données que l'ont veut utiliser. \\ 
+
+===== Configuration des droits de Redmine ===== 
+
+Les droits se gère dans l'onglet Administration, on peut choisir différents droit pour les personnes en fonctions des rôles et des permissions qu'on leur attribue. \\ 
+
+===== Configuration des droits de Dokuwiki ===== 
+
+La configuration des droits de Dokuwiki se fait à l'aide de la liste de contrôle d'accès (ACL), à l'installation du container elle est désactivée par défaut. \\ 
+
+Il faut ouvrir un bash du container contenant Dokuwiki : \\ 
+
+<code> sudo docker exec -i -t dokuwiki bash </code> 
+
+Ensuite il faut copier //acl.auth.php.dist// et //users.auth.php.dist// dans// acl.auth.php// et //users.auth.php// , ces fichiers se trouvent dans ///var/www/dokuwiki/conf// : \\ 
+
+<code>cp acl.auth.php.dist acl.auth.php 
+cp users.auth.php.dist users.auth.php</code> 
+
+Dans le même répertoire, dans le  fichier //dokuwiki.php// il faut configurer : \\ 
+
+<code>$conf['useacl']       = 1;        // ceci active ACL 
+$conf['superuser']    = '@admin'; // le groupe admin est super-utilisateur 
+$conf['disableactions'] = ''; 
+$conf['autopasswd']  = 0;        //permet à l'utilisateur de choisir son mdp 
+$conf['passcrypt']   = 'smd5';   //Méthode de cryptage utilisée 
+$conf['defaultgroup']= 'user';   //Groupe par défaut dans lequel les nouveaux 
+$conf['profileconfirm'] = '1';   //Mot de passe requis pour modifier le profil courant 
+$conf['authtype']     = 'authplain'; //backend en mode plaintext(default) 
+$conf['lang']          = 'fr';     // affiche les pages en français </code> 
+
+Il faut donner les droits de lecture et d'écriture aux fichiers //acl.auth.php// et //users.auth.php// pour permettre l'inscription de nouveaux utilisateurs et de gérer les droits via la page « administrer » de dokuwiki : \\ 
+
+<code>chmod +rw acl.ath.php users.auth.php</code>

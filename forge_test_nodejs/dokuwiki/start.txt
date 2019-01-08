@@ -1,0 +1,196 @@
+====== Création d'une forge ====== 
+
+
+
+
+=====Installation de Docker :===== 
+
+
+(http://www.it-connect.fr/debuter-avec-docker-et-les-containers-sous-debian-8/)\\ 
+(http://linuxfr.org/news/docker-tutoriel-pour-manipuler-les-conteneurs). 
+
+Tout d'abord il faut modifier le fichier sources.list qui se trouve dans /etc/apt en y ajoutant :\\ 
+<code>deb http://http.debian.net/debian wheezy-backports main</code> 
+Ensuite on met à jour notre liste de source et on met à jour notre noyau linux\\ 
+<code>apt-get update</code> 
+<code>apt-get install -t wheezy-backports linux-image-amd64</code> 
+<code> reboot </code> 
+
+après la mise a jour de notre noyau on peux maintenant installer Docker: \\ 
+<code>curl -sSL https://get.docker.com/ | sh</code> 
+
+dans le fichier //docker// du répertoire ///etc/default// il faut configurer votre proxy pour pouvoir recupérer les images: 
+
+<code> export http_proxy="http://votre.proxy.fr:port/" 
+ export https_proxy="http://votre.proxy.fr:port/" </code> 
+
+Pour démarrer Docker il suffit de taper :\\ 
+<code>service docker start</code> 
+
+Ensuite il faut ajouter l'utilisateur au groupe docker pour pouvoir l'utiliser sans sudo : \\
+<code> sudo usermod -aG docker <nom d'utilisateur> </code>
+
+Si jamais une erreur du type //WARNING: Your kernel does not support swap limit capabilities.// apparait 
+il faut modifier le fichier //grub// dans ///etc/default/// : 
+
+<code> GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1" </code> 
+
+ensuite lancer dans le terminal: \\ 
+
+<code>update-grub 
+reboot </code> 
+
+===== Installation d'une image Gitlab : ===== 
+(https://github.com/sameersbn/docker-gitlab)\\ 
+
+Récupération de l'image de Gitlab :\\ 
+<code>docker pull quay.io/sameersbn/gitlab:8.1.2</code> 
+
+Récupération de l'image de postgresql :\\ 
+<code>docker pull quay.io/sameersbn/postgresql:9.4-5</code> 
+
+Récupération de l'image de redis :\\ 
+<code>docker pull quay.io/sameersbn/redis:latest</code> 
+ 
+Démarrage du container postgresql :\\ 
+<code>docker run --name gitlab-postgresql -d \ 
+    --env 'DB_NAME=gitlabhq_production' \ 
+    --env 'DB_USER=gitlab' --env 'DB_PASS=password' \ 
+    --volume /srv/docker/gitlab/postgresql:/var/lib/postgresql \ 
+    quay.io/sameersbn/postgresql:9.4-5</code> 
+
+Démarrage du container redis :\\ 
+<code>docker run --name gitlab-redis -d \ 
+    --volume /srv/docker/gitlab/redis:/var/lib/redis \ 
+    quay.io/sameersbn/redis:latest</code> 
+    
+Démarrage du container Gitlab :\\ 
+<code>docker run --name gitlab -d \ 
+    --link gitlab-postgresql:postgresql --link gitlab-redis:redisio \ 
+    --publish 10022:22 --publish 10080:80 \ 
+    --env 'GITLAB_PORT=10080' --env 'GITLAB_SSH_PORT=10022' \ 
+    --env 'GITLAB_SECRETS_DB_KEY_BASE=long-and-random-alpha-numeric-string' \ 
+    --volume /srv/docker/gitlab/gitlab:/home/git/data \ 
+    quay.io/sameersbn/gitlab:8.1.2</code> 
+
+Gitlab est maintenant accessible sur le port 10080. [[http://localhost:10080|Accéder à Gitlab]] (localhost:10080) \\ 
+
+==== Changer le nombre de caractères min et max du mot de passe ==== 
+
+Il faut tout d'abord exécuter un terminal dans gitlab :\\ 
+
+<code>docker exec -i -t gitlab bash</code> 
+
+ensuite dans ///home/git/gitlab/config/initializers// il faut copier //devise_password_length.rb.example// dans //devise_password_length.rb// :\\ 
+
+<code>cp  devise_password_length.rb.example  devise_password_length.rb</code> 
+
+Et à l'intérieur de ce fichier nous décidons de combien de caractères min et max doivent être composés les mot de passes. \\ 
+
+<code>Devise.setup do |config| 
+
+  config.password_length = 4..128  // mot de passe de 4 à 128 caractères 
+
+end</code> 
+
+===== Installation d'une image redmine : ===== 
+(https://github.com/sameersbn/docker-redmine)\\ 
+
+Récupération de l'image de redmine :\\ 
+<code>docker pull quay.io/sameersbn/redmine:latest</code> 
+
+Démarrage du container postgresql :\\ 
+<code>docker run --name=postgresql-redmine -d \ 
+  --env='DB_NAME=redmine_production' \ 
+  --env='DB_USER=redmine' --env='DB_PASS=password' \ 
+  --volume=/srv/docker/redmine/postgresql:/var/lib/postgresql \ 
+  quay.io/sameersbn/postgresql:9.4-5</code> 
+  
+Démarrage du container redmine :\\ 
+<code>docker run --name=redmine -d \ 
+  --link=postgresql-redmine:postgresql --publish=10083:80 \ 
+  --env='REDMINE_PORT=10083' \ 
+  --volume=/srv/docker/redmine/redmine:/home/redmine/data \ 
+  quay.io/sameersbn/redmine:3.1.1-3</code> 
+  
+Redmine est maintenant accessible sur le port 10083 du serveur. [[http://localhost:10083|Accéder à Redmine]] (localhost:10083)\\ 
+
+===== Installation d'une image Jenkins : ===== 
+(https://github.com/aespinosa/docker-jenkins)\\ 
+
+Récupération de l'image de Jenkins :\\ 
+<code>docker pull aespinosa/jenkins</code> 
+
+Démarrage du container Jenkins :\\ 
+<code>docker run --name jenkins -d \ 
+-P 49155:8080\ 
+--volume /srv/docker/jenkins:/home/jenkins/data \ 
+aespinosa/jenkins</code> 
+
+Jenkins est maintenant accessible sur le port 49155. [[http://localhost:49155|Accéder à Jenkins]] (localhost:49155)\\ 
+===== Installation d'une image Dokuwiki : ===== 
+(https://github.com/reterVision/docker-dokuwiki)\\ 
+
+Récupération de l'image de Dokuwiki :\\ 
+<code>docker pull gcweb/dokuwiki</code> 
+
+Démarrage du container Dokuwiki :\\ 
+<code>docker run --name dokuwiki -d \ 
+--volume /srv/docker/dokuwiki:/home/dokuwiki/data \ 
+-p 10089:80 \ 
+gcweb/dokuwiki</code> 
+
+Dokuwiki est maintenant accessible sur le port 10089. [[http://localhost:10089|Accéder à Dokuwiki]] 
+
+
+===== Installation d'une image Registry V2 =====
+(https://docs.docker.com/registry/)\\
+
+Récupération de l'image de Registry : \\
+<code>docker pull registry:2</code>
+
+Démarrage du container Registry : \\
+<code> docker run -d --name=registry -p 5000:5000 registry:2</code>
+
+Le registry est maintenant disponible sur le port 5000. 
+
+==== Utilisation du registry sans sécurité ====
+
+Pour pouvoir push et pull dans le registry depuis notre machine ou une machine distante, \\ il faut ajouter dans ///etc/default/docker// les lignes suivantes :
+
+<code>DOCKER_OPTS=" --insecure-registry <nom_du_serveur_du_registry>:5000> 
+export http_proxy="http://10.0.4.2:3128/" 
+export https_proxy="http://10.0.4.2:3128/" 
+export no_proxy="127.0.0.1/8, 172.31.0.0/16, ::1, nom_du_serveur_du_registry, nom_du_serveur_du_registry:5000" 
+</code>
+===== Quelques commandes docker utiles ===== 
+
+Pour rechercher une image pré-configurée on utilise la commande :\\ 
+<code>docker search <nom de l'image que l'on veut></code> 
+
+On la récupère avec : \\ 
+<code>docker pull <nom de l'image voulu></code> 
+ 
+Pour démarrer un container il faut lancer :\\ 
+<code>docker run -d -p <hôte_port1>:<container_port1> -p <hôte_port2>:<container_port2> <nom de l'image></code> 
+
+Pour connaître le nom des containers en cour :\\ 
+<code>docker ps</code> 
+
+Pour redémarrer ou stopper un container :\\ 
+<code>docker restart <nom du container></code> 
+ou 
+<code>docker stop <nom de container></code> 
+
+
+Pour supprimer une image :\\ 
+<code>docker rmi <nom de l'image></code> 
+
+Pour exécuter un bash dans un container :\\ 
+<code>sudo docker exec -i -t <numero du container> bash</code>
+
+Pour voir les logs d'un container : \\
+<code> docker logs <nom de container> </code>
+
+Pour voir les métadonnées d'un container : \\
+<code> docker inspect <nom de container> </code>

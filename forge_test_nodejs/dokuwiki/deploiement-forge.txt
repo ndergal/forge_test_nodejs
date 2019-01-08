@@ -1,0 +1,19 @@
+====== Déploiement de forge ======
+
+Pour déployer une forge sur votre serveur il faut télécharger le fichier suivant {{:forge.zip|}} :\\
+et taper les commandes suivantes dans le répertoire du fichier zip: \\
+
+<code>unzip forge.zip
+cd forge/
+sudo cat config >> /etc/default/docker 
+sudo service docker restart </code> \\
+       
+Après avoir effectué ces commandes il suffit de lancer le script: \\
+
+<code>sudo ./start.sh </code> \\
+A la fin du script les outils sont accessibles sur la page: [[http://localhost:8080|Portail-Forge]] \\
+
+===== Outils nécessaires =====
+
+- Docker Compose \\
+- Docker \\
